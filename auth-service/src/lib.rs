@@ -1,7 +1,12 @@
+mod routes;
+
 use std::error::Error;
+use crate::routes::signup::signup;
 
 use axum::{http::StatusCode, response::IntoResponse, routing::post, serve::Serve, Router};
 use tower_http::services::ServeDir;
+
+
 
 pub struct Application {
     pub server: Serve<Router, Router>,
@@ -35,9 +40,7 @@ impl Application {
 
 }
 
-async fn signup() -> impl IntoResponse {
-    StatusCode::CREATED.into_response()
-}
+
 
 async fn login() -> impl IntoResponse {
     StatusCode::OK.into_response()
