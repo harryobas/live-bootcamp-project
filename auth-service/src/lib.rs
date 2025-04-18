@@ -4,11 +4,20 @@ pub mod services;
 pub mod app_state;
 
 use std::error::Error;
-use crate::routes::signup::signup;
-use app_state::AppState;
 
-use axum::{http::StatusCode, response::IntoResponse, routing::post, serve::Serve, Router};
+use routes::signup::signup;
+use app_state::AppState;
+use domain::error::AuthAPIError;
+use serde::{Serialize, Deserialize};
+
+use axum::{
+    http::StatusCode, 
+    response::{IntoResponse, Response}, 
+    routing::post, serve::Serve, Router,
+    Json
+};
 use tower_http::services::ServeDir;
+
 
 
 
@@ -43,6 +52,27 @@ impl Application {
     }
 
 
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ErrorResponse {
+    pub error: String
+}
+
+impl IntoResponse for AuthAPIError {
+    fn into_response(self) -> Response {
+        let (status, error_message) = match self {
+            AuthAPIError::UserAlreadyExists => (StatusCode::CONFLICT, "User already exists"),
+            AuthAPIError::InvalidCredentials => (StatusCode::BAD_REQUEST, "Invalid credentials"),
+            AuthAPIError::UnexpectedError => (StatusCode::INTERNAL_SERVER_ERROR, "Unexpected error"),
+
+        };
+        let body = Json(ErrorResponse{
+            error: error_message.to_string(),
+        });
+        (status, body).into_response()
+
+    }
 }
 
 
