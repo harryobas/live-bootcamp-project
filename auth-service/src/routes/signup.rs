@@ -1,7 +1,7 @@
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
 
-use crate::{app_state::AppState, domain::{user::User, error::AuthAPIError}};
+use crate::{app_state::AppState, domain::{error::AuthAPIError, user::User}};
 
 pub async fn signup(
     State(state): State<AppState>,
@@ -16,12 +16,12 @@ pub async fn signup(
         request.requires_2fa
     );
 
-    let mut user_store = state.user_store.write().await;
-    if user_store.users.contains_key(&request.email) {
+    let  user_store = state.user_store.clone();
+    if user_store.get_user(&request.email).await.is_ok() {
         return Err(AuthAPIError::UserAlreadyExists);
     }
 
-   if let Err(_) = user_store.add_user(user) {
+   if let Err(_) = user_store.add_user(user).await {
     return Err(AuthAPIError::UnexpectedError);
    }else{
     let response = Json(
@@ -29,9 +29,8 @@ pub async fn signup(
     );
 
     Ok((StatusCode::CREATED, response))
-}
+ }
 
-    
 }
 
 #[derive(Deserialize)]

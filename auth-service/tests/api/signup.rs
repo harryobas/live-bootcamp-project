@@ -40,7 +40,7 @@ async fn should_return_201_if_valid_input() {
     let random_email = get_random_email();
 
     let request_body = serde_json::json!({
-        "email": "user@example.com",
+        "email": &random_email,
         "password": "password123",
         "requires2FA": true
     });

@@ -1,7 +1,8 @@
 
 
-use auth_service::{app_state::{AppState, get_user_store}, Application};
+use auth_service::{app_state::AppState, services::hashmap_user_store::HashMapUserStore, Application};
 use uuid::Uuid;
+use std::sync::Arc;
 
 pub struct TestApp {
     pub address: String,
@@ -11,8 +12,8 @@ pub struct TestApp {
 
 impl TestApp {
     pub async fn new() -> Self {
-        let user_store = get_user_store();
-        let app_state = AppState::new(user_store);
+        let user_store = HashMapUserStore::default();
+        let app_state = AppState{user_store: Arc::new(user_store.clone())};
 
         let app = Application::build(app_state,"127.0.0.1:0")
             .await
