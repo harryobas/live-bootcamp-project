@@ -10,7 +10,7 @@ pub struct Password(pub String);
 
 impl Email {
     pub fn parse(s: &str) -> Result<Self, & 'static str> {
-        if s.contains('@') && !s.is_empty() {
+        if !s.is_empty() && s.contains('@') {
             Ok(Email(s.to_string()))
         }else{
             Err("Invalid email format")
@@ -45,7 +45,7 @@ impl AsRef<str> for Password {
 }
 
 mod tests{
-    use super::*;
+    use super::{Email, Password};
 
     #[test]
     fn valid_email_should_parse(){

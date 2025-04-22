@@ -48,13 +48,10 @@ impl TestApp {
             .expect("Failed to execute POST /signup request")
     }
 
-    pub async fn login(&self, body: impl serde::Serialize) ->  reqwest::Response {
-        let body_str = serde_json::to_string(&body).expect("Failed to serialize body");
-
+    pub async fn post_login(&self, body: impl serde::Serialize) ->  reqwest::Response {
         self.http_client
             .post(&format!("{}/login", &self.address))
-            .header("Content-Type", "application/json")
-            .body(body_str)
+            .json(&body)
             .send()
             .await
             .expect("Faild to execute POST /login request")

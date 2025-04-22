@@ -5,7 +5,7 @@ pub mod app_state;
 
 use std::error::Error;
 
-use routes::signup::signup;
+use routes::{signup::signup, login::login};
 use app_state::AppState;
 use domain::error::AuthAPIError;
 use serde::{Serialize, Deserialize};
@@ -65,6 +65,7 @@ impl IntoResponse for AuthAPIError {
             AuthAPIError::UserAlreadyExists => (StatusCode::CONFLICT, "User already exists"),
             AuthAPIError::InvalidCredentials => (StatusCode::BAD_REQUEST, "Invalid credentials"),
             AuthAPIError::UnexpectedError => (StatusCode::INTERNAL_SERVER_ERROR, "Unexpected error"),
+            AuthAPIError::InCorrectCredentials => (StatusCode::UNAUTHORIZED, "Not authorized")
 
         };
         let body = Json(ErrorResponse{
@@ -75,11 +76,6 @@ impl IntoResponse for AuthAPIError {
     }
 }
 
-
-
-async fn login() -> impl IntoResponse {
-    StatusCode::OK.into_response()
-}
 
 async fn verify_2fa() -> impl IntoResponse {
     StatusCode::OK.into_response()
