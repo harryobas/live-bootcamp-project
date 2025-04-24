@@ -9,7 +9,7 @@ async fn verify_token_returns_success() {
             "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
         }
     );
-    let response = app.verify_token(request_body).await;
+    let response = app.post_verify_token(request_body).await;
 
     assert_eq!(response.status().as_u16(), 200);
 }

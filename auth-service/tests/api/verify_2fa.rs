@@ -12,6 +12,6 @@ async fn verify_2fa_returns_success() {
         }
           
     );
-    let response = app.verify_2fa(request_body).await;
+    let response = app.post_verify_2fa(request_body).await;
     assert_eq!(response.status().as_u16(), 200);
 }

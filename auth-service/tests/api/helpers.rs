@@ -1,11 +1,18 @@
 
 
-use auth_service::{app_state::AppState, services::hashmap_user_store::HashMapUserStore, Application};
+use auth_service::{
+    app_state::AppState,
+    services::hashmap_user_store::HashMapUserStore,
+    Application,
+    utils::constants::test
+};
+use reqwest::cookie::{CookieStore, Jar};
 use uuid::Uuid;
 use std::sync::Arc;
 
 pub struct TestApp {
     pub address: String,
+    pub cookie_jar: Arc<Jar>,
     pub http_client: reqwest::Client,
     
 }
@@ -15,7 +22,7 @@ impl TestApp {
         let user_store = HashMapUserStore::default();
         let app_state = AppState{user_store: Arc::new(user_store.clone())};
 
-        let app = Application::build(app_state,"127.0.0.1:0")
+        let app = Application::build(app_state,test::APP_ADDRESS)
             .await
             .expect("Failed to build application");
 
@@ -24,9 +31,13 @@ impl TestApp {
         #[allow(clippy::let_underscore_future)]
         let _ = tokio::spawn(app.run());
 
-        let http_client = reqwest::Client::new();
+        let cookie_jar = Arc::new(Jar::default());
+        let http_client = reqwest::Client::builder()
+            .cookie_provider(cookie_jar.clone())
+            .build()
+            .unwrap();
 
-        Self {address, http_client,}
+        Self {address, cookie_jar, http_client}
 
 
     }
@@ -49,7 +60,7 @@ impl TestApp {
     }
 
     pub async fn post_login(&self, body: impl serde::Serialize) ->  reqwest::Response {
-        self.http_client
+         self.http_client
             .post(&format!("{}/login", &self.address))
             .json(&body)
             .send()
@@ -57,35 +68,28 @@ impl TestApp {
             .expect("Faild to execute POST /login request")
     }
 
-    pub async fn verify_2fa(&self, body: impl serde::Serialize) -> reqwest::Response {
-        let body_str = serde_json::to_string(&body).expect("Failed to serialize body");
-
-
+    pub async fn post_verify_2fa(&self, body: impl serde::Serialize) -> reqwest::Response {
         self.http_client
             .post(&format!("{}/verify-2fa", &self.address))
-            .header("Content-Type", "application/json")
-            .body(body_str)
+            .json(&body)
             .send()
             .await
             .expect("Faild to execute POST /verify-2fa request")
 
     }
 
-    pub async fn logout(&self) -> reqwest::Response {
+    pub async fn post_logout(&self) -> reqwest::Response {
         self.http_client
             .post(&format!("{}/logout", &self.address))
-            .header("Cookie", "jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")
             .send()
             .await
             .expect("Failed to execute POST /logout reqiest")
     }
 
-    pub async fn verify_token(&self, body: impl serde::Serialize) -> reqwest::Response {
-        let body_str = serde_json::to_string(&body).expect("Failed to serialize body");
-
+    pub async fn post_verify_token(&self, body: impl serde::Serialize) -> reqwest::Response {
         self.http_client
             .post(&format!("{}/verify-token", &self.address))
-            .body(body_str)
+            .json(&body)
             .send()
             .await
             .expect("Failed to execute POST /verify-token request")

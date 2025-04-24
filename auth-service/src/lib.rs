@@ -6,18 +6,18 @@ pub mod utils;
 
 use std::error::Error;
 
-use routes::{signup::signup, login::login};
+use routes::{signup::signup, login::login, logout::logout};
 use app_state::AppState;
 use domain::error::AuthAPIError;
 use serde::{Serialize, Deserialize};
 
 use axum::{
-    http::StatusCode, 
+    http::{Method, StatusCode}, 
     response::{IntoResponse, Response}, 
     routing::post, serve::Serve, Router,
     Json
 };
-use tower_http::services::ServeDir;
+use tower_http::{cors::CorsLayer, services::ServeDir};
 
 
 
@@ -29,6 +29,15 @@ pub struct Application {
 
 impl Application {
     pub async fn build(app_state: AppState, address: &str) -> Result<Self, Box<dyn Error>> {
+        let allowed_origins = [
+            "http://localhost:8000".parse()?
+
+        ];
+        let cors = CorsLayer::new()
+            .allow_methods([Method::GET, Method::POST])
+            .allow_credentials(true)
+            .allow_origin(allowed_origins);
+
         let router = Router::new()
             .nest_service("/", ServeDir::new("assets"))
             .route("/signup", post(signup))
@@ -36,7 +45,8 @@ impl Application {
             .route("/verify-2fa", post(verify_2fa))
             .route("/logout", post(logout))
             .route("/verify-token", post(verify_token))
-            .with_state(app_state);
+            .with_state(app_state)
+            .layer(cors);
 
         let listener = tokio::net::TcpListener::bind(address).await?;
         let address = listener.local_addr()?.to_string();
@@ -66,7 +76,9 @@ impl IntoResponse for AuthAPIError {
             AuthAPIError::UserAlreadyExists => (StatusCode::CONFLICT, "User already exists"),
             AuthAPIError::InvalidCredentials => (StatusCode::BAD_REQUEST, "Invalid credentials"),
             AuthAPIError::UnexpectedError => (StatusCode::INTERNAL_SERVER_ERROR, "Unexpected error"),
-            AuthAPIError::InCorrectCredentials => (StatusCode::UNAUTHORIZED, "Not authorized")
+            AuthAPIError::InCorrectCredentials => (StatusCode::UNAUTHORIZED, "Not authorized"),
+            AuthAPIError::InvalidToken => (StatusCode::UNAUTHORIZED, "invalid token"),
+            AuthAPIError::MissingToken => (StatusCode::BAD_REQUEST, "missing token"),
 
         };
         let body = Json(ErrorResponse{
@@ -82,9 +94,6 @@ async fn verify_2fa() -> impl IntoResponse {
     StatusCode::OK.into_response()
 }
 
-async fn logout() -> impl IntoResponse {
-    StatusCode::OK.into_response()
-}
 
 async fn verify_token() -> impl IntoResponse {
     StatusCode::OK.into_response()
