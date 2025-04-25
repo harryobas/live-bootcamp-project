@@ -6,7 +6,7 @@ pub mod utils;
 
 use std::error::Error;
 
-use routes::{signup::signup, login::login, logout::logout};
+use routes::{signup::signup, login::login, logout::logout, verify_token::verify_token};
 use app_state::AppState;
 use domain::error::AuthAPIError;
 use serde::{Serialize, Deserialize};
@@ -94,8 +94,4 @@ async fn verify_2fa() -> impl IntoResponse {
     StatusCode::OK.into_response()
 }
 
-
-async fn verify_token() -> impl IntoResponse {
-    StatusCode::OK.into_response()
-}
 
