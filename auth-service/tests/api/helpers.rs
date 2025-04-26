@@ -2,11 +2,11 @@
 
 use auth_service::{
     app_state::AppState,
-    services::hashmap_user_store::HashMapUserStore,
+    services::{hashmap_user_store::HashMapUserStore, hashset_banned_token_store::HashSetBannedTokenStore},
     Application,
     utils::constants::test
 };
-use reqwest::cookie::{CookieStore, Jar};
+use reqwest::cookie:: Jar;
 use uuid::Uuid;
 use std::sync::Arc;
 
@@ -14,15 +14,20 @@ pub struct TestApp {
     pub address: String,
     pub cookie_jar: Arc<Jar>,
     pub http_client: reqwest::Client,
+    pub app_state: AppState,
     
 }
 
 impl TestApp {
     pub async fn new() -> Self {
         let user_store = HashMapUserStore::default();
-        let app_state = AppState{user_store: Arc::new(user_store.clone())};
+        let banned_tokens_store = HashSetBannedTokenStore::default();
+        let app_state = AppState{
+            user_store: Arc::new(user_store.clone()),
+            banned_tokens_store: Arc::new(banned_tokens_store.clone())
+        };
 
-        let app = Application::build(app_state,test::APP_ADDRESS)
+        let app = Application::build(app_state.clone(),test::APP_ADDRESS)
             .await
             .expect("Failed to build application");
 
@@ -37,7 +42,12 @@ impl TestApp {
             .build()
             .unwrap();
 
-        Self {address, cookie_jar, http_client}
+        Self {
+            address,
+             cookie_jar,
+            http_client,
+            app_state,
+        }
 
 
     }

@@ -7,14 +7,13 @@ use crate::{app_state::AppState, domain::error::AuthAPIError, utils::auth::valid
 
 
 pub async fn verify_token(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(request): Json<VerifyTokenRequest>
 ) -> Result<impl IntoResponse, AuthAPIError> {
     let token = request.token;
+    let banned_store = state.banned_tokens_store;
 
-    if validate_token(&token).await.is_err() {
-        return Err(AuthAPIError::InvalidToken);
-    }
+     validate_token(&token, banned_store.clone()).await.map_err(|_| AuthAPIError::InvalidToken)?;
 
     Ok(StatusCode::OK)
 

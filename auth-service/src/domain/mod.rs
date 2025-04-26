@@ -1,6 +1,7 @@
 pub mod user;
 pub mod error;
 pub mod user_stores;
+pub mod data_stores;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Email(pub String);

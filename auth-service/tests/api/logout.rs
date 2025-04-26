@@ -44,14 +44,24 @@ async fn should_return_200_if_valid_jwt_cookie() {
     }))
     .await;
 
-    app.post_login(serde_json::json!({
+    let login_response = app.post_login(serde_json::json!({
         "email": random_email,
         "password": password,
     }))
     .await;
 
+    let token = login_response
+    .cookies()
+    .find(|c| c.name() == JWT_COOKIE_NAME)
+    .expect("No token found")
+    .value()
+    .to_string();
+
     let response = app.post_logout().await;
     assert_eq!(response.status().as_u16(), 200);
+
+    let banned_tokens = app.app_state.banned_tokens_store;
+    assert_eq!(banned_tokens.is_banned_token(&token).await, true);
 
 
 

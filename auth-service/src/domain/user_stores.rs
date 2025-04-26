@@ -8,7 +8,6 @@ pub trait UserStore: Send + Sync {
 
 }
 
-
 #[derive(Debug, PartialEq)]
 pub enum UserStoreError {
     UserAlreadyExists,
@@ -17,3 +16,5 @@ pub enum UserStoreError {
     UnexpectedError,
 
 }
+
+
