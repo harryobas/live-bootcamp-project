@@ -1,10 +1,7 @@
 
 
 use auth_service::{
-    app_state::AppState,
-    services::{hashmap_user_store::HashMapUserStore, hashset_banned_token_store::HashSetBannedTokenStore},
-    Application,
-    utils::constants::test
+    app_state::AppState, services::{hashmap_two_fa_code_store::HashmapTwoFACodeStore, hashmap_user_store::HashMapUserStore, hashset_banned_token_store::HashSetBannedTokenStore}, utils::constants::test, Application
 };
 use reqwest::cookie:: Jar;
 use uuid::Uuid;
@@ -20,12 +17,11 @@ pub struct TestApp {
 
 impl TestApp {
     pub async fn new() -> Self {
-        let user_store = HashMapUserStore::default();
-        let banned_tokens_store = HashSetBannedTokenStore::default();
-        let app_state = AppState{
-            user_store: Arc::new(user_store.clone()),
-            banned_tokens_store: Arc::new(banned_tokens_store.clone())
-        };
+        let user_store = Arc::new(HashMapUserStore::default());
+        let banned_tokens_store = Arc::new(HashSetBannedTokenStore::default());
+        let two_fa_code_store = Arc::new(HashmapTwoFACodeStore::default());
+        
+        let app_state = AppState::new(user_store, banned_tokens_store, two_fa_code_store);
 
         let app = Application::build(app_state.clone(),test::APP_ADDRESS)
             .await
