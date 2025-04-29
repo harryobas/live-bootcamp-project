@@ -38,10 +38,11 @@ async fn should_return_422_if_malformed_input() {
 async fn should_return_201_if_valid_input() {
     let app = TestApp::new().await;
     let random_email = get_random_email();
+    let password = "validpassword";
 
     let request_body = serde_json::json!({
-        "email": &random_email,
-        "password": "password123",
+        "email": random_email,
+        "password": password,
         "requires2FA": true
     });
 
@@ -57,6 +58,7 @@ async fn should_return_201_if_valid_input() {
             .await
             .expect("Could not deserialize response body"),
         expected_response
+    
     )
 
 }

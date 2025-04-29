@@ -19,9 +19,6 @@ use axum::{
 };
 use tower_http::{cors::CorsLayer, services::ServeDir};
 
-
-
-
 pub struct Application {
     pub server: Serve<Router, Router>,
     pub address: String,

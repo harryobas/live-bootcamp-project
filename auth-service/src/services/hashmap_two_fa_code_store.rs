@@ -1,5 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
-use tokio::sync::RwLock;
+use std::collections::HashMap;
 
 use crate::domain::{
     Email, 
@@ -8,28 +7,24 @@ use crate::domain::{
 
 #[derive(Default)]
 pub struct HashmapTwoFACodeStore {
-    codes: Arc<RwLock<HashMap<Email, (LoginAttemptId, TwoFACode)>>>,
+    codes: HashMap<Email, (LoginAttemptId, TwoFACode)>,
 }
 #[async_trait::async_trait]
 impl TwoFACodeStore for HashmapTwoFACodeStore {
     async fn add_code(
-        &self,
+        &mut self,
         email: Email,
         login_attempt_id: LoginAttemptId,
         code: TwoFACode
     ) -> Result<(), TwoFACodeStoreError> {
         self.codes
-            .write()
-            .await
             .insert(email, (login_attempt_id, code));
 
         Ok(())
     }
 
-    async fn remove_code(&self, email: &Email) -> Result<(), TwoFACodeStoreError> {
+    async fn remove_code(&mut self, email: &Email) -> Result<(), TwoFACodeStoreError> {
         self.codes
-            .write()
-            .await
             .remove(email)
             .ok_or(TwoFACodeStoreError::UnexpectedError)
             .map(|_| ())
@@ -40,8 +35,6 @@ impl TwoFACodeStore for HashmapTwoFACodeStore {
         email: &Email
     ) -> Result<(LoginAttemptId, TwoFACode), TwoFACodeStoreError> {
         self.codes
-            .read()
-            .await
             .get(email)
             .ok_or(TwoFACodeStoreError::LoginAttemptIdNotFound)
             .map(|v|(v.0.clone(), v.1.clone()))
@@ -58,9 +51,9 @@ mod tests {
         let email = Email("user@example.com".to_string());
         let login_attempt_id = LoginAttemptId::default();
         let code = TwoFACode::default();
-        let codes = Arc::new(RwLock::new(HashMap::new()));
+        let codes = HashMap::new();
 
-        let  hashmap_two_fa_code_store = HashmapTwoFACodeStore{codes};
+        let  mut hashmap_two_fa_code_store = HashmapTwoFACodeStore{codes};
 
         assert!(
             hashmap_two_fa_code_store
@@ -76,9 +69,9 @@ mod tests {
         let email = Email("user@example.com".to_string());
         let login_attempt_id = LoginAttemptId::default();
         let code = TwoFACode::default();
-        let codes = Arc::new(RwLock::new(HashMap::new()));
+        let codes = HashMap::new();
 
-        let  hashmap_two_fa_code_store = HashmapTwoFACodeStore{codes};
+        let  mut hashmap_two_fa_code_store = HashmapTwoFACodeStore{codes};
         let _ = hashmap_two_fa_code_store.add_code(email.clone(), login_attempt_id, code).await;
 
         assert!(
@@ -91,9 +84,9 @@ mod tests {
         let email = Email("user@example.com".to_string());
         let login_attempt_id = LoginAttemptId::default();
         let code = TwoFACode::default();
-        let codes = Arc::new(RwLock::new(HashMap::new()));
+        let codes = HashMap::new();
 
-        let  hashmap_two_fa_code_store = HashmapTwoFACodeStore{codes};
+        let  mut hashmap_two_fa_code_store = HashmapTwoFACodeStore{codes};
         let _ = hashmap_two_fa_code_store.add_code(email.clone(), login_attempt_id, code).await;
 
         assert!(

@@ -1,27 +1,26 @@
-use std::{collections::HashMap, sync::Arc};
-use tokio::sync::RwLock;
+use std::collections::HashMap;
 
 use crate::domain::{user::User, user_stores::{UserStore, UserStoreError}, Email, Password};
 
 #[derive(Debug,Clone, Default)]
 pub struct HashMapUserStore {
-    pub users: Arc<RwLock<HashMap<Email, User>>>
+    pub users: HashMap<Email, User>
 }
 
 #[async_trait::async_trait]
 impl UserStore for HashMapUserStore {
-    async fn add_user(&self, user: User) -> Result<(), UserStoreError> {
-        let mut users = self.users.write().await;
-        if users.contains_key(&user.email) {
+    async fn add_user(&mut self, user: User) -> Result<(), UserStoreError> {
+        
+        if self.users.contains_key(&user.email) {
             return Err(UserStoreError::UserAlreadyExists);
 
         }
-        users.insert(user.email.clone(), user);
+        self.users.insert(user.email.clone(), user);
         Ok(())
     }
 
     async fn get_user(&self, email: &str) -> Result<User, UserStoreError> {
-        match self.users.read().await.get(&Email(email.to_string())) {
+        match self.users.get(&Email(email.to_string())) {
             None => Err(UserStoreError::UserNotFound),
             Some(user) => Ok(user.clone()),
         }
@@ -30,7 +29,7 @@ impl UserStore for HashMapUserStore {
     async fn validate_user(&self, email: &str, password: &str) -> Result<(), UserStoreError> {
         let email = Email(email.to_string());
         let password = Password(password.to_string());
-        match self.users.read().await.get(&email) {
+        match self.users.get(&email) {
             Some(user) => {
                 if user.password == password {
                     Ok(())
@@ -54,11 +53,9 @@ mod tests {
         let requires_2fa = true;
 
         let usr = User::new(email, password, requires_2fa);
-        let map = Arc::new(RwLock::new(HashMap::new()));
+        let users = HashMap::new();
 
-        let  store = HashMapUserStore {
-            users: map
-        };
+        let  mut store = HashMapUserStore {users};
 
         assert!(store.add_user(usr).await.is_ok());
 
@@ -76,10 +73,10 @@ mod tests {
             requires_2fa,
         );
 
-        let  map = Arc::new(RwLock::new(HashMap::new()));
-        let _ = map.write().await.insert(email.clone(), usr);
+        let  mut users = HashMap::new();
+        let _ = users.insert(email.clone(), usr);
 
-        let store = HashMapUserStore {users: map};
+        let store = HashMapUserStore {users};
         assert!(store.get_user(email.as_ref()).await.is_ok());
     }
     #[tokio::test]
@@ -94,11 +91,9 @@ mod tests {
             requires_2fa,
         );
 
-        let  map = Arc::new(RwLock::new(HashMap::new()));
-        let _ = map.write().await.insert(email.clone(), usr);
-        let store = HashMapUserStore {
-            users: map
-        };
+        let  mut users = HashMap::new();
+        let _ = users.insert(email.clone(), usr);
+        let store = HashMapUserStore {users};
 
         assert!(store.validate_user(email.as_ref(), password.as_ref()).await.is_ok())
 

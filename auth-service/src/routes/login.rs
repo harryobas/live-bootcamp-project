@@ -5,7 +5,7 @@ use axum_extra::extract::CookieJar;
 
 use crate::{
     app_state::AppState,
-    domain::{data_stores::{LoginAttemptId, TwoFACode}, error::AuthAPIError, user::User, Email, Password},
+    domain::{data_stores::{LoginAttemptId, TwoFACode}, error::AuthAPIError, Email, Password},
     utils::auth::generate_auth_cookie
 };
 
@@ -22,11 +22,17 @@ pub async fn login(
 
     let user_store = state.user_store.clone();
 
-   user_store.validate_user(email.as_ref(), password.as_ref())
+   user_store
+    .read()
+    .await
+    .validate_user(email.as_ref(), password.as_ref())
     .await
     .map_err(|_| AuthAPIError::InCorrectCredentials)?;
     
-   let user = user_store.get_user(email.as_ref())
+   let user = user_store
+    .read()
+    .await
+    .get_user(email.as_ref())
     .await
     .map_err(|_| AuthAPIError::InCorrectCredentials)?;
 
@@ -47,9 +53,21 @@ async fn handle_2fa(
     let two_fa_code = TwoFACode::default();
     
     state.two_fa_code_store
-        .add_code(email.clone(), login_attempt_id.clone(), two_fa_code)
+        .write()
+        .await
+        .add_code(email.clone(), login_attempt_id.clone(), two_fa_code.clone())
         .await
         .map_err(|_| AuthAPIError::UnexpectedError)?;
+
+    let recipient = email;
+    let subject = "2FA Code";
+    let content= two_fa_code.as_ref();
+
+    state.email_client.write().await.send_mail(
+        recipient, 
+        subject, 
+        content
+    ).await.map_err(|_| AuthAPIError::UnexpectedError)?;
 
     let response_body = Json(LoginResponse::TwoFactorAuth(
         TwoFactorAuthResponse { 

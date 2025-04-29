@@ -21,14 +21,24 @@ pub async fn signup(
     );
 
     let  user_store = state.user_store.clone();
-    if user_store.get_user(&request.email).await.is_ok() {
-        return Err(AuthAPIError::UserAlreadyExists);
-    } 
 
+    if  user_store
+        .read()
+        .await
+        .get_user(&request.email)
+        .await.is_ok(){
+            return Err(AuthAPIError::UserAlreadyExists)
+        }
+        
 
-   if let Err(_) = user_store.add_user(user).await {
-    return Err(AuthAPIError::UnexpectedError);
-   }else{
+    user_store
+        .write()
+        .await
+        .add_user(user)
+        .await
+        .map_err(|_| AuthAPIError::UnexpectedError)?;
+  
+
     let response = Json(
         SignupResponse{message: "User created successfully".to_string()}
     );
@@ -36,7 +46,7 @@ pub async fn signup(
     Ok((StatusCode::CREATED, response))
  }
 
-}
+
 
 #[derive(Deserialize)]
 pub struct SignupRequest {

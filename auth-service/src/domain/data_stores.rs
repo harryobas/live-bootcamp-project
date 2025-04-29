@@ -3,20 +3,20 @@ use rand::Rng;
 
 #[async_trait::async_trait]
 pub trait BannedTokenStore: Send + Sync {
-    async fn add_token(&self, token: &str);
+    async fn add_token(&mut self, token: &str);
     async fn is_banned_token(&self, token: &str) -> bool;
 }
 
 #[async_trait::async_trait]
 pub trait TwoFACodeStore: Send + Sync {
     async fn add_code(
-        &self,
+        &mut self,
         email: Email,
         login_attempt_id: LoginAttemptId,
         code: TwoFACode
     ) -> Result<(), TwoFACodeStoreError>;
 
-    async fn remove_code(&self, email: &Email) -> Result<(), TwoFACodeStoreError>;
+    async fn remove_code(&mut self, email: &Email) -> Result<(), TwoFACodeStoreError>;
     async fn get_code(
         &self,
         email: &Email

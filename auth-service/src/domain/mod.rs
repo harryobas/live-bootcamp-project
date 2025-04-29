@@ -2,6 +2,9 @@ pub mod user;
 pub mod error;
 pub mod user_stores;
 pub mod data_stores;
+pub mod email_client;
+
+pub use email_client::*;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Email(pub String);

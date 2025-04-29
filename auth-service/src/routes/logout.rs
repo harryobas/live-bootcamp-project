@@ -25,6 +25,8 @@ pub async fn logout(
 
     // Add token to banned list
     state.banned_tokens_store
+        .write()
+        .await
         .add_token(token)
         .await;
 
