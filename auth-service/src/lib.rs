@@ -6,17 +6,24 @@ pub mod utils;
 
 use std::error::Error;
 
-use routes::{signup::signup, login::login, logout::logout, verify_token::verify_token};
+use routes::{
+    signup::signup, 
+    login::login,
+    logout::logout, 
+    verify_token::verify_token,
+    verify_2fa::verify_2fa
+};
 use app_state::AppState;
 use domain::error::AuthAPIError;
 use serde::{Serialize, Deserialize};
-
 use axum::{
-    http::{Method, StatusCode}, 
-    response::{IntoResponse, Response}, 
+    http::{StatusCode, Method}, 
+    response::IntoResponse, 
     routing::post, serve::Serve, Router,
-    Json
+    Json,
 };
+
+use axum::response::Response;
 use tower_http::{cors::CorsLayer, services::ServeDir};
 
 pub struct Application {
@@ -87,8 +94,5 @@ impl IntoResponse for AuthAPIError {
 }
 
 
-async fn verify_2fa() -> impl IntoResponse {
-    StatusCode::OK.into_response()
-}
 
 

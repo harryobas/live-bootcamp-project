@@ -57,7 +57,7 @@ impl Default for LoginAttemptId {
 pub struct TwoFACode(pub String);
 
 impl TwoFACode {
-    fn parse(code: &str) -> Result<Self, String> {
+   pub fn parse(code: &str) -> Result<Self, String> {
         if code.len() == 6 {
             Ok(Self(code.to_string()))
         }else {
